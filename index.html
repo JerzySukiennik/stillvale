@@ -1,0 +1,107 @@
+<!doctype html>
+<!-- Stillvale - a quiet walk through an alpine valley. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Stillvale</title>
+<meta name="description" content="A quiet walk through an alpine valley. Wander, listen to the birds, breathe.">
+<meta name="theme-color" content="#9cc0dc">
+<meta property="og:title" content="Stillvale">
+<meta property="og:description" content="A quiet walk through an alpine valley.">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+} }
+</script>
+<style>
+  :root { --ink: #f8f6f0; --veil: rgba(9, 22, 17, 0.42); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc0dc; touch-action: none; user-select: none; -webkit-user-select: none; overscroll-behavior: none; }
+  #c { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; outline: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  #title { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; color: var(--ink);
+    background: radial-gradient(120% 90% at 50% 40%, rgba(0,0,0,0) 35%, rgba(8,20,15,0.42) 100%), linear-gradient(to bottom, rgba(0,0,0,0) 55%, rgba(8,20,15,0.38));
+    transition: opacity 1.6s ease, visibility 1.6s; }
+  body:not(.ready) #title { background: linear-gradient(to bottom, #8fb6d6, #b9d0df 55%, #6f8f5b 56%, #4d6b3c); }
+  #title.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+  #title .inner { padding: 24px; animation: rise 2.2s cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 300; font-size: clamp(60px, 12vw, 136px); letter-spacing: 0.035em; line-height: 0.95; margin: 0;
+    text-shadow: 0 2px 34px var(--veil), 0 1px 2px rgba(0,0,0,0.18); }
+  .sub { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 300; font-size: clamp(19px, 2.7vw, 27px); margin: 10px 0 46px; opacity: 0.94;
+    text-shadow: 0 1px 16px var(--veil); }
+  .pill { font: 500 12px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; letter-spacing: 0.34em; text-transform: uppercase;
+    padding: 17px 36px 16px 40px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.72); background: rgba(255,255,255,0.08);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: #fff; transition: background .35s ease, transform .35s ease, opacity .5s ease; }
+  .pill:hover:not(:disabled) { background: rgba(255,255,255,0.22); transform: translateY(-1px); }
+  .pill:active:not(:disabled) { transform: scale(0.98); }
+  .pill:disabled { opacity: 0.62; cursor: default; }
+  #load { width: 150px; height: 1px; margin: 22px auto 0; background: rgba(255,255,255,0.25); overflow: hidden; transition: opacity .8s; }
+  #bar { height: 100%; background: #fff; transform-origin: left; transform: scaleX(0); transition: transform .5s ease; }
+  body.ready #load { opacity: 0; }
+  .small { font: 500 11px/1.4 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; letter-spacing: 0.24em; text-transform: uppercase; opacity: 0.72; margin: 24px 0 0; }
+
+  #hint { position: fixed; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom)); transform: translate(-50%, 8px); max-width: calc(100vw - 32px);
+    font: 500 13px/1.3 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; letter-spacing: 0.04em; color: #fff; text-align: center;
+    padding: 11px 20px; border-radius: 999px; background: rgba(10, 22, 16, 0.3); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 1s ease, transform 1s ease; }
+  #hint.show { opacity: 1; transform: translate(-50%, 0); }
+
+  #pause { position: fixed; inset: 0; display: grid; place-content: center; gap: 10px; text-align: center; color: #fff; background: rgba(8, 18, 13, 0.38);
+    opacity: 0; pointer-events: none; transition: opacity .4s ease; cursor: pointer; }
+  #pause.show { opacity: 1; pointer-events: auto; }
+  #pause span { font: 300 46px/1 'Cormorant Garamond', Georgia, serif; letter-spacing: 0.04em; }
+  #pause small { font: 500 11px/1 -apple-system, system-ui, sans-serif; letter-spacing: 0.26em; text-transform: uppercase; opacity: 0.8; }
+
+  #caption { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; pointer-events: none; }
+  #caption p { margin: 0; font: 700 clamp(24px, 4.6vw, 44px)/1.22 'Montserrat', 'Proxima Nova', -apple-system, system-ui, sans-serif; color: #fff; text-align: center;
+    text-shadow: 0 0 3px rgba(0,0,0,0.85), 0 2px 6px rgba(0,0,0,0.55); opacity: 0; transform: scale(0.94); transition: opacity .25s ease, transform .5s cubic-bezier(.2,1.4,.4,1); }
+  #caption.show p { opacity: 1; transform: none; }
+  #again { margin-top: 44px; opacity: 0; pointer-events: none; }
+  #again.show { opacity: 1; pointer-events: auto; }
+
+  #timer { position: fixed; left: 50%; top: calc(18px + env(safe-area-inset-top)); transform: translate(-50%, -6px); color: #fff;
+    font: 300 34px/1 'Cormorant Garamond', Georgia, serif; font-variant-numeric: tabular-nums lining-nums; letter-spacing: 0.06em;
+    text-shadow: 0 1px 14px rgba(8, 20, 15, 0.5), 0 1px 2px rgba(0,0,0,0.25); opacity: 0; pointer-events: none; transition: opacity 1.2s ease, transform 1.2s ease; }
+  #timer.show { opacity: 0.92; transform: translate(-50%, 0); }
+  #timer.tick { animation: tick .9s cubic-bezier(.2,.8,.2,1); }
+  @keyframes tick { 0% { transform: translate(-50%, 0) scale(1.14); } 100% { transform: translate(-50%, 0) scale(1); } }
+  #stick { position: fixed; left: 0; top: 0; width: 120px; height: 120px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.55); background: rgba(255,255,255,0.08);
+    opacity: 0; pointer-events: none; transition: opacity .15s; }
+  #stick.on { opacity: 1; }
+  #knob { position: absolute; left: 36px; top: 36px; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.78); box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+  #jumpbtn { display: none; position: fixed; right: calc(24px + env(safe-area-inset-right)); bottom: calc(30px + env(safe-area-inset-bottom)); width: 66px; height: 66px;
+    border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.12); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  #jumpbtn::after { content: ''; position: absolute; left: 50%; top: 52%; width: 16px; height: 16px; border-left: 2px solid #fff; border-top: 2px solid #fff; transform: translate(-50%, -30%) rotate(45deg); }
+  body.touch.playing #jumpbtn { display: block; }
+  body.touch #hint { bottom: calc(110px + env(safe-area-inset-bottom)); }
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="-1"></canvas>
+<div id="title">
+  <div class="inner">
+    <h1>Stillvale</h1>
+    <p class="sub">a quiet walk through the valley</p>
+    <button id="begin" class="pill" disabled>Loading</button>
+    <div id="load"><div id="bar"></div></div>
+    <p class="small">Headphones recommended</p>
+  </div>
+</div>
+<div id="timer"></div>
+<div id="hint"></div>
+<div id="pause"><span>Paused</span><small>click to continue</small></div>
+<div id="caption"><p>they just ruined my walk<br>bro 💔😭</p><button id="again" class="pill">Walk again</button></div>
+<div id="stick"><div id="knob"></div></div>
+<button id="jumpbtn" aria-label="Jump"></button>
+<audio id="unlock" src="assets/audio/silence.mp3" playsinline loop preload="auto"></audio>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
